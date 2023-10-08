@@ -1,0 +1,25 @@
+{
+  "name": "fake-it",
+  "version": "1.0.0",
+  "description": "Faker texts",
+  "main": "dist/code.js",
+  "scripts": {
+    "build": "npm run build:main",
+    "build:main": "esbuild src/code.ts --outfile=dist/code.js --bundle --minify --sourcemap --target=chrome58 --watch",
+    "watch": "npm run build -- --watch"
+  },
+  "author": "",
+  "license": "",
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.78.1",
+    "esbuild": "0.19.4",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^8.1.0",
+    "countries-list": "^3.0.5"
+  }
+}

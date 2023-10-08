@@ -1,0 +1,31 @@
+{
+  "name": "Fake it",
+  "id": "1291306802526613625",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": ["figma"],
+  "parameters": [
+    {
+      "name": "Category",
+      "key": "category",
+      "description": "Select a category"
+    },
+    {
+      "name": "Type",
+      "key": "type",
+      "description": "Select a data type"
+    },
+    {
+      "name": "Language",
+      "key": "lang",
+      "description": "Select a language"
+    }
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ]
+  }
+}
