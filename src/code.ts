@@ -10,15 +10,35 @@ import Fuse from 'fuse.js'
 const ALLTAG = '(All)'
 const RANDTAG = '(random)'
 
+const rand = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)]
+
 const format = (s: string) => {
   const spaced = s.replace(/([A-Z])/, ' $1')
   return spaced[0].toUpperCase() + spaced.slice(1)
 }
+const getFake = (lang:FakerLanguage, category:string, type:Method|string) => {
+  const f = (allFakers as any)[lang.code]
+  let item:Method
+  if(type === RANDTAG) {
+    if(category == ALLTAG) item = rand(allMethods)
+    else item = rand(allMethods.filter(item => item.category == category))
+  } else {
+    item = type as Method
+  }
+  const result = f[item.category.toLowerCase()][item.method]()
+  
+  // // check if result is an object
+  // if (typeof result === 'object')
+  //   return Object.values(result).filter((item: any) => typeof item === 'string').join(' ')
+  return result
+}
+
 interface Method {
   category: string
   method: string
   label: string
   fullLabel: string
+  key?: string
 }
 // setup data
 const searchableCategories = new Fuse(Object.keys(methods))
@@ -30,6 +50,19 @@ const allMethods:Method[] = Object.keys(methods)
     fullLabel : category + ' / ' + format(method)
   })))
   .flat()
+// add every method sub results as their own item
+allMethods.forEach(item => {
+  const result = getFake({ code: 'en', name: '' }, item.category, item)
+  if (typeof result === 'object') {
+    Object.keys(result)
+      .filter((key: string) => typeof result[key] === 'string')
+      .forEach((key: string) => allMethods.push({
+        ...item,
+        fullLabel: item.category + ' / ' + format(item.method) + ' (' + format(key) + ')',
+        key: key
+      }))
+  }
+})
 const searchableMethods = new Fuse(allMethods, {
   keys: ['category', 'label', 'fullLabel']
 })
@@ -91,21 +124,6 @@ figma.parameters.on('input', ({key, query, parameters, result}: ParameterInputEv
       return
   }
 })
-
-const rand = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)]
-
-const getFake = (lang:FakerLanguage, category:string, type:Method|string) => {
-  const f = (allFakers as any)[lang.code]
-  if(type === RANDTAG) {
-    let item:Method
-    if(category == ALLTAG) item = rand(allMethods)
-    else item = rand(allMethods.filter(item => item.category == category))
-    return f[item.category.toLowerCase()][item.method]()
-  }
-  let item = type as Method
-  return f[item.category.toLowerCase()][item.method]()
-}
-
 figma.on('run', async ({parameters}: RunEvent) => {
   if (!parameters) return
 
@@ -113,7 +131,18 @@ figma.on('run', async ({parameters}: RunEvent) => {
   if(parameters.lang === RANDTAG) lang = rand(languages)
   else lang = parameters.lang
 
-  const text = () => getFake(lang, parameters.category, parameters.type)
+  const text = () => {
+    const fake = getFake(lang, parameters.category, parameters.type)
+    if (typeof fake === 'object') {
+      if (parameters.type.hasOwnProperty('key')) {
+        return fake[parameters.type.key]
+      }
+      return Object.values(fake).join(' ')
+    }
+    if (Array.isArray(fake))
+      return rand(fake);
+    return fake;
+  }
   
   const txtRange = figma.currentPage.selectedTextRange
   if(txtRange) {
