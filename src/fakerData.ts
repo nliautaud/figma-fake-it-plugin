@@ -1,11 +1,11 @@
-interface FakerLanguages {
+export interface FakerLanguage {
   code: string;
   name: string;
 }
 interface FakerMethods {
   [key: string]: string[];
 }
-export const languages: FakerLanguages[] = [
+export const languages: FakerLanguage[] = [
   { code: 'af_ZA', name: 'Afrikaans (South Africa)' },
   { code: 'ar', name: 'Arabic' },
   { code: 'az', name: 'Azerbaijani' },

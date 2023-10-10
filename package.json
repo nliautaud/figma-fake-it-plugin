@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@faker-js/faker": "^8.1.0",
-    "countries-list": "^3.0.5"
+    "countries-list": "^3.0.5",
+    "fuse.js": "^6.6.2"
   }
 }
