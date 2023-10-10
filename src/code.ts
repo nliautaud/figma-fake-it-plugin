@@ -55,7 +55,6 @@ allMethods.forEach(item => {
   const result = getFake({ code: 'en', name: '' }, item.category, item)
   if (typeof result === 'object') {
     Object.keys(result)
-      .filter((key: string) => typeof result[key] === 'string')
       .forEach((key: string) => allMethods.push({
         ...item,
         fullLabel: item.category + ' / ' + format(item.method) + ' (' + format(key) + ')',
@@ -165,7 +164,7 @@ const getOrCreateNodes = (nodes:SceneNode[]) => {
 }
 const replaceText = async (txtNode: TextNode, text: () => string) => {
   await figma.loadFontAsync(txtNode.fontName as FontName)
-  txtNode.characters = text()
+  txtNode.characters = `${text()}`
 }
 const insertInTextRange = async (txtRange: {
   node: TextNode
@@ -174,5 +173,5 @@ const insertInTextRange = async (txtRange: {
 }, text: () => string) => {
   await figma.loadFontAsync(txtRange.node.fontName as FontName)
   txtRange.node.deleteCharacters(txtRange.start, txtRange.end)
-  txtRange.node.insertCharacters(txtRange.start, text())
+  txtRange.node.insertCharacters(txtRange.start, `${text()}`)
 }
