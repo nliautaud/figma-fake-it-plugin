@@ -5,7 +5,7 @@ export interface FakerLanguage {
 interface FakerMethods {
   [key: string]: string[];
 }
-export const languages: FakerLanguage[] = [
+export const languages = ():FakerLanguage[] => [
   { code: 'af_ZA', name: 'Afrikaans (South Africa)' },
   { code: 'ar', name: 'Arabic' },
   { code: 'az', name: 'Azerbaijani' },
@@ -74,7 +74,7 @@ export const languages: FakerLanguage[] = [
   { code: 'zh_TW', name: 'Chinese (Taiwan)' },
   { code: 'zu_ZA', name: 'Zulu (South Africa)' }]
 
-export const methods: FakerMethods = {
+export const methods = ():FakerMethods => ({
   Airline: [
     "aircraftType",
     "airline",
@@ -362,4 +362,4 @@ export const methods: FakerMethods = {
     "verb",
     "words"
   ]
-};
+})

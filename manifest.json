@@ -5,23 +5,31 @@
   "main": "dist/code.js",
   "capabilities": [],
   "enableProposedApi": false,
-  "editorType": ["figma"],
-  "parameters": [
+  "editorType": [
+    "figma"
+  ],
+  "menu": [
     {
-      "name": "Category",
-      "key": "category",
-      "description": "Select a category"
+      "name": "Fake it", "command": "run",
+      "parameters": [
+        {
+          "name": "Language",
+          "key": "lang",
+          "description": "Select a language"
+        },
+        {
+          "name": "Category",
+          "key": "category",
+          "description": "Select a category"
+        },
+        {
+          "name": "Type",
+          "key": "type",
+          "description": "Select a data type"
+        }
+      ]
     },
-    {
-      "name": "Type",
-      "key": "type",
-      "description": "Select a data type"
-    },
-    {
-      "name": "Language",
-      "key": "lang",
-      "description": "Select a language"
-    }
+    {"name": "Reset history", "command": "clearHistory"}
   ],
   "networkAccess": {
     "allowedDomains": [
