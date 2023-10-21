@@ -18,21 +18,11 @@ const formatSuggestion = (input: { name: string, icon?: string }) => ({
 
 figma.parameters.on('input', async ({ key, query, parameters, result }: ParameterInputEvent) => {
 
-  // store history
-  if (parameters.lang && parameters.lang.name !== Fake.OPTIONS.anylang.name) {
-    await Storage.push<string>('history.lang', parameters.lang.code)
-  }
-  if (parameters.category && parameters.category.name !== Fake.OPTIONS.anycat.name) {
-    await Storage.push<string>('history.cat', parameters.category)
-  }
-  if (parameters.type && parameters.type.name !== Fake.OPTIONS.anytype.name) {
-    await Storage.push<Method>('history.method', parameters.type, (stored) => stored.name == parameters.type.name)
-  }
+  await storeHistory(parameters)
 
-  // console.log(parameters)
-  console.log(await Storage.get('history.lang'))
-  console.log(await Storage.get('history.cat'))
-  console.log(await Storage.get('history.method'))
+  console.log('load history.lang', await Storage.get('history.lang'))
+  console.log('load history.cat', await Storage.get('history.cat'))
+  console.log('load history.method', await Storage.get('history.method'))
 
   let suggestions: SuggestionOption[]
   switch (key) {
@@ -105,6 +95,11 @@ figma.parameters.on('input', async ({ key, query, parameters, result }: Paramete
         result.setSuggestions(suggestions)
       }
       break
+    case 'tag':
+      result.setSuggestions([{
+        name: "Yes",
+        data: true
+      }])
     default:
       return
   }
@@ -172,65 +167,155 @@ figma.on('run', async ({ parameters }: RunEvent) => {
     await Storage.clear('history.method')
     figma.closePlugin()
     return
-  }
+  } 
   
   if (!parameters) return
 
-  // store type history
+  await storeHistory(parameters)
+
+  let errors = 0
+
+  if(figma.command == 'update') {
+    const txtNodes = getSelectedNodes()
+    for (const node of txtNodes) {
+      const { category, type } = paramsFromName(node)
+      if(!category || !type) continue
+      const method = Fake.allMethods.find(item => item.category == category && item.name == type)
+      if(!method) continue
+      errors += await replaceText(node, () => getText(parameters.lang, category, method)) ? 0 : 1
+    }
+  }
+  else {
+    let lang: FakerLanguage
+    if (parameters.lang.name == Fake.OPTIONS.anylang.name)
+      lang = rand(Fake.languages())
+    else lang = parameters.lang
+
+    const txtRange = figma.currentPage.selectedTextRange
+    if (txtRange) {
+      await insertInTextRange(txtRange, () => getText(lang, parameters.category.name, parameters.type))
+    } else {
+      const txtNodes = getSelectedNodes()
+      if (txtNodes.length == 0)
+        txtNodes.push(newTextNode(figma.viewport.center))
+      for (const node of txtNodes) {
+        errors += await replaceText(node, () => getText(lang, parameters.category.name, parameters.type)) ? 0 : 1
+        if(parameters.tag) {
+          renameNode(node, parameters.category.name, parameters.type)
+        }
+      }
+    }
+  }
+  if(errors) {
+    figma.notify(errors+' items could not be updated (Faker returned an error)', { timeout: 3000 })
+  }
+  figma.closePlugin()
+})
+
+async function storeHistory(parameters: ParameterValues) {
+  if (parameters.lang && parameters.lang.name !== Fake.OPTIONS.anylang.name) {
+    await Storage.push<string>('history.lang', parameters.lang.code)
+  }
+  if (parameters.category && parameters.category.name !== Fake.OPTIONS.anycat.name) {
+    await Storage.push<string>('history.cat', parameters.category)
+  }
   if (parameters.type && parameters.type.name !== Fake.OPTIONS.anytype.name) {
     await Storage.push<Method>('history.method', parameters.type, (stored) => stored.name == parameters.type.name)
   }
+}
 
-  let lang: FakerLanguage
-  if (parameters.lang.name == Fake.OPTIONS.anylang.name)
-    lang = rand(Fake.languages())
-  else lang = parameters.lang
-
-  const text = () => {
-    const fake = Fake.getFake(lang, parameters.category.name, parameters.type)
+function getText(lang: FakerLanguage, category: string, type: Method): string | null{
+  try {
+    const fake = Fake.getFake(lang, category, type)
     if (typeof fake === 'object') {
-      if (parameters.type.hasOwnProperty('key')) {
-        return fake[parameters.type.key]
+      if (type.hasOwnProperty('key') && type.key) {
+        return fake[type.key]
       }
       return Object.values(fake).join(' ')
     }
     if (Array.isArray(fake))
       return rand(fake);
     return fake;
+  } catch (e:any) {
+    console.error(e)
+    return null
   }
+}
 
-  const txtRange = figma.currentPage.selectedTextRange
-  if (txtRange) {
-    await insertInTextRange(txtRange, text)
-  } else {
-    const txtNodes = getOrCreateNodes(figma.currentPage.selection as SceneNode[])
-    for (const node of txtNodes) {
-      await replaceText(node, text)
+function getSelectedNodes() {
+  return figma.currentPage.selection.flatMap(getChildTextNodes)
+}
+
+function getChildTextNodes(node: SceneNode) : TextNode[] {
+  const nodes = [] as TextNode[]
+  const traverse = (n: SceneNode) => {
+    if(n.type == 'TEXT') {
+      nodes.push(n)
+    }
+    else if("children" in n) {
+      for(const child of n.children) {
+        if(
+          child.type === "GROUP" ||
+          child.type === "FRAME" ||
+          child.type === "INSTANCE" ||
+          child.type === "COMPONENT" ||
+          child.type === "TEXT"
+        ) {
+          traverse(child)
+        }
+      }
     }
   }
-  figma.closePlugin()
-})
+  traverse(node)
+  return nodes
+}
 
-const getOrCreateNodes = (nodes: SceneNode[]) : TextNode[] => {
-  const txtNodes = nodes.filter(n => n.type == 'TEXT') as TextNode[]
-  if (txtNodes.length == 0) {
+function newTextNode(position:Vector) : TextNode {
     const newNode = figma.createText()
-    newNode.x = figma.viewport.center.x
-    newNode.y = figma.viewport.center.y
-    txtNodes.push(newNode)
+    newNode.x = position.x
+    newNode.y = position.y
+    return newNode
+}
+
+function renameNode(node: SceneNode, category: string, type: Method) {
+  const tag = `*${category}.${type.name}`
+  const match = node.name.match(/\*.+\..+$/i)
+  if(!match) {
+    node.name += ` ${tag}`
+    return
   }
-  return txtNodes
+  if(match[0] == tag) return
+  node.name = node.name.replace(/\*.+$/, tag)
 }
-const replaceText = async (txtNode: TextNode, text: () => string) => {
+
+function paramsFromName(node: SceneNode) {
+  const match = node.name.match(/\*([^.]+)\.([^.]+)$/i)
+  if(!match) return {
+    category: null,
+    type: null
+  }
+  return {
+    category: match[1],
+    type: match[2]
+  }
+}
+
+async function replaceText (txtNode: TextNode, text: () => string|null): Promise<boolean> {
+  const txt = text()
+  if(!txt) return false
   await figma.loadFontAsync(txtNode.fontName as FontName)
-  txtNode.characters = `${text()}`
+  txtNode.characters = `${txt}`
+  return true
 }
-const insertInTextRange = async (txtRange: {
+
+async function insertInTextRange(txtRange: {
   node: TextNode
   start: number
   end: number
-}, text: () => string) => {
+}, text: () => string|null) {
+  const txt = text()
+  if(!txt) return
   await figma.loadFontAsync(txtRange.node.fontName as FontName)
   txtRange.node.deleteCharacters(txtRange.start, txtRange.end)
-  txtRange.node.insertCharacters(txtRange.start, `${text()}`)
+  txtRange.node.insertCharacters(txtRange.start, `${txt}`)
 }

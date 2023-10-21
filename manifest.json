@@ -10,7 +10,8 @@
   ],
   "menu": [
     {
-      "name": "Fake it", "command": "run",
+      "name": "Fake it",
+      "command": "run",
       "parameters": [
         {
           "name": "Language",
@@ -26,6 +27,23 @@
           "name": "Type",
           "key": "type",
           "description": "Select a data type"
+        },
+        {
+          "name": "Tag layer",
+          "key": "tag",
+          "description": "Add tag to layer name ?",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "Update selected",
+      "command": "update",
+      "parameters": [
+        {
+          "name": "Language",
+          "key": "lang",
+          "description": "Select a language"
         }
       ]
     },
