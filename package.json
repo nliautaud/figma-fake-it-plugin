@@ -7,7 +7,7 @@
     "build": "npm run build:main",
     "build:main": "esbuild src/code.ts --outfile=dist/code.js --bundle --minify --target=es6",
     "build:dev": "esbuild src/code.ts --outfile=dist/code.js --bundle --sourcemap --target=es6",
-    "watch": "npm run build:dev -- --watch"
+    "watch": "npm run build:main -- --watch"
   },
   "author": "",
   "license": "",

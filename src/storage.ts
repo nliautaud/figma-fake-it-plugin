@@ -15,6 +15,7 @@ const push = async <T>(key: string, value: any, compare?: (stored: T) => boolean
   } else {
     existingId = arr.indexOf(value)
   }
+  if(existingId == arr.length - 1) return
   if (existingId > -1) arr.splice(existingId, 1)
   arr.push(value)
   console.log('storage', existingId > -1 ? 'update' : 'add', key, arr)

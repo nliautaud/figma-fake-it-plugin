@@ -74,6 +74,14 @@ export const languages = ():FakerLanguage[] => [
   { code: 'zh_TW', name: 'Chinese (Taiwan)' },
   { code: 'zu_ZA', name: 'Zulu (South Africa)' }]
 
+export const objectMethods = [
+  {category: "Airline", method: "airline"},
+  {category: "Airline", method: "airplane"},
+  {category: "Airline", method: "airport"},
+  {category: "Finance", method: "currency"},
+  {category: "Science", method: "chemical"},
+  {category: "Science", method: "chemicalElement"},
+] 
 export const methods = ():FakerMethods => ({
   Airline: [
     "aircraftType",
