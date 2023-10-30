@@ -10,7 +10,7 @@
   "menu": [
     {
       "name": "Fake it",
-      "command": "src/code.ts--run",
+      "command": "src/main.ts--quickRun",
       "parameters": [
         {
           "key": "lang",
@@ -37,7 +37,7 @@
     },
     {
       "name": "Update selected",
-      "command": "src/code.ts--update",
+      "command": "src/main.ts--quickUpdate",
       "parameters": [
         {
           "key": "lang",
@@ -48,7 +48,7 @@
     },
     {
       "name": "Reset history",
-      "command": "src/code.ts--clearHistory"
+      "command": "src/main.ts--clearHistory"
     },
     {
       "name": "Open UI",

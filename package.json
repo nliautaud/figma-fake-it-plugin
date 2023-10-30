@@ -44,8 +44,8 @@
       {
         "name": "Fake it",
         "main": {
-          "src": "src/code.ts",
-          "handler": "run"
+          "src": "src/main.ts",
+          "handler": "quickRun"
         },
         "parameters": [
           {
@@ -74,8 +74,8 @@
       {
         "name": "Update selected",
         "main": {
-          "src": "src/code.ts",
-          "handler": "update"
+          "src": "src/main.ts",
+          "handler": "quickUpdate"
         },
         "parameters": [
           {
@@ -88,7 +88,7 @@
       {
         "name": "Reset history",
         "main": {
-          "src": "src/code.ts",
+          "src": "src/main.ts",
           "handler": "clearHistory"
         }
       },

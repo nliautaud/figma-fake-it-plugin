@@ -21,26 +21,35 @@ import {
   Divider,
   IconLayerImage16
 } from '@create-figma-plugin/ui'
-import { emit } from '@create-figma-plugin/utilities'
+import { on, once, emit } from '@create-figma-plugin/utilities'
 import { JSX, h } from 'preact'
 import { useCallback, useState } from 'preact/hooks'
 
+import { Storage } from '../storage'
+import { Fake } from '../fake'
+import { Nodes } from '../nodes'
+
 import '!./output.css'
+import React from 'preact/compat'
+
+import { LangHistory, CatHistory, MethodHistory, SelectionHandler, NodeInfo } from './types'
+
 
 function Select() {
   const [value, setValue] = useState<string>('foo');
   const icon = <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512"><path fill="#fff" d="m478.33 433.6l-90-218a22 22 0 0 0-40.67 0l-90 218a22 22 0 1 0 40.67 16.79L316.66 406h102.67l18.33 44.39A22 22 0 0 0 458 464a22 22 0 0 0 20.32-30.4ZM334.83 362L368 281.65L401.17 362Zm-66.99-19.08a22 22 0 0 0-4.89-30.7c-.2-.15-15-11.13-36.49-34.73c39.65-53.68 62.11-114.75 71.27-143.49H330a22 22 0 0 0 0-44H214V70a22 22 0 0 0-44 0v20H54a22 22 0 0 0 0 44h197.25c-9.52 26.95-27.05 69.5-53.79 108.36c-31.41-41.68-43.08-68.65-43.17-68.87a22 22 0 0 0-40.58 17c.58 1.38 14.55 34.23 52.86 83.93c.92 1.19 1.83 2.35 2.74 3.51c-39.24 44.35-77.74 71.86-93.85 80.74a22 22 0 1 0 21.07 38.63c2.16-1.18 48.6-26.89 101.63-85.59c22.52 24.08 38 35.44 38.93 36.1a22 22 0 0 0 30.75-4.9Z" /></svg>
-  const options: Array<TextboxAutocompleteOption> = [{
-    value: 'foo'
-  }, {
-    value: 'bar'
-  }, {
-    value: 'baz'
-  }, '-', {
-    header: 'Header'
-  }, {
-    value: 'qux'
-  }]
+
+  once<LangHistory>('history.lang', (history: string[]) => {
+    console.log('retrieved history', history)
+    if (history.length > 0) {
+      const lang = langFromCode(history[history.length - 1])
+      if (lang) setValue(lang.name)
+    }
+  })
+  const options = Fake.languages().map(lang => ({
+    value: lang.name
+  }))
+  const langFromCode = (code: string) => Fake.languages().find(lang => lang.code == code)
   function handleInput(event: JSX.TargetedEvent<HTMLInputElement>) {
     const newValue = event.currentTarget.value
     setValue(newValue)
@@ -91,12 +100,23 @@ function TagLayerName() {
 
 function CreateUI() {
 
+  const [hasSelection, setHasSelection] = useState<boolean>(false)
+  const [selection, setSelection] = useState<NodeInfo[]>([])
+  on<SelectionHandler>('selection', (state:boolean, nodes: NodeInfo[]) => {
+    setHasSelection(state)
+    setSelection(nodes)
+    console.log('selection', nodes)
+  })
+
   return <div class="flex flex-col flex-1 min-h-0">
     <VerticalSpace space="medium" />
     <Container space='medium'>
-      <Text>
-        <Muted>No layers selected</Muted>
-      </Text>
+      { !hasSelection ?
+          <Text><Muted>No layers selected</Muted></Text>
+        : selection.length == 0 ?
+          <Text><Muted>No text layers in selection</Muted></Text>
+        : <Text>{selection.length} text layers in selection</Text>
+      }
       <VerticalSpace space="medium" />
     </Container>
     <Select />
@@ -107,7 +127,10 @@ function CreateUI() {
     <VerticalSpace space="extraLarge" />
     <Container space='medium'>
       <Button fullWidth>
-        Create
+        {selection.length > 0 ? 
+          <span>Replace {selection.length} texts</span>
+          : 'Create text'
+        }
       </Button>
     </Container>
   </div>
@@ -184,7 +207,7 @@ function IconLink(props: { href: string, icon: any, children: any }) {
 }
 
 function Plugin() {
-  const [tab, setTab] = useState<string>('Update');
+  const [tab, setTab] = useState<string>('Create');
   const tabs: Array<TabsOption> = [{
     children: null,
     value: 'Create'

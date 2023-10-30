@@ -9,6 +9,17 @@ import { Storage } from './storage'
 // const results = fuzzysort.go('mr', mystuff, {key:'file'})
 // [{score:-18, obj:{file:'MeshRenderer.cpp'}}, {score:-6009, obj:{file:'Monitor.cpp'}}]
 
+
+const searchableLangs = new Fuse(Fake.languages(), {
+  keys: ['name']
+})
+const searchableCategories = new Fuse(Fake.categories(), {
+  keys: ['name']
+})
+const searchableMethods = new Fuse(Fake.allMethods, {
+  keys: ['category', 'label', 'fullLabel']
+})
+
 export interface SuggestionOption {
   name: string
   data?: any
@@ -25,7 +36,9 @@ const search = (query: string, searchable: Fuse<any>): SuggestionOption[] => {
     .search(query)
     .map(result => format(result.item))
 }
-async function languages(): Promise<SuggestionOption[]> {
+async function languages(query:string): Promise<SuggestionOption[]> {
+  if(query)
+    return search(query, searchableLangs)
   return getSuggestions<FakerLanguage, string>(
     await Storage.get<string>('history.lang'),
     Fake.languages,
@@ -34,7 +47,9 @@ async function languages(): Promise<SuggestionOption[]> {
     Any.languages
   )
 }
-async function categories(): Promise<SuggestionOption[]> {
+async function categories(query:string): Promise<SuggestionOption[]> {
+  if(query)
+    return search(query, searchableCategories)
   return getSuggestions<NamedItem, string>(
     await Storage.get<string>('history.cat'),
     Fake.categories,
@@ -43,7 +58,28 @@ async function categories(): Promise<SuggestionOption[]> {
     Any.categories
   )
 }
-async function methods(category: NamedItem): Promise<SuggestionOption[]> {
+async function methods(query:string, category: NamedItem): Promise<SuggestionOption[]> {
+  let suggestions: SuggestionOption[]
+  if (query) {
+    if (!category) {
+      suggestions = searchableMethods.search({ fullLabel: query }).map(result => ({
+        name: result.item.fullLabel,
+        data: result.item
+      }))
+    } else {
+      suggestions = searchableMethods.search({
+        $and: [
+          { category: `!${category.name}` },
+          { label: query }
+        ]
+      }).map(result => ({
+        name: result.item.label,
+        data: result.item
+      }))
+    }
+    return suggestions
+  }
+
   if (!category) {
     return getSuggestions<Method, Method>(
       await Storage.get<Method>('history.method'),
