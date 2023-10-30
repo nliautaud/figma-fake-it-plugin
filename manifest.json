@@ -1,36 +1,35 @@
 {
-  "name": "Fake it",
-  "id": "1291306802526613625",
   "api": "1.0.0",
-  "main": "dist/code.js",
-  "capabilities": [],
-  "enableProposedApi": false,
   "editorType": [
     "figma"
   ],
+  "id": "1291306802526613625",
+  "name": "Fake it",
+  "main": "build/main.js",
+  "ui": "build/ui.js",
   "menu": [
     {
       "name": "Fake it",
-      "command": "run",
+      "command": "src/code.ts--run",
       "parameters": [
         {
-          "name": "Language",
           "key": "lang",
+          "name": "Language",
           "description": "Select a language"
         },
         {
-          "name": "Category",
           "key": "category",
+          "name": "Category",
           "description": "Select a category"
         },
         {
-          "name": "Type",
           "key": "type",
+          "name": "Type",
           "description": "Select a data type"
         },
         {
-          "name": "Tag layer",
           "key": "tag",
+          "name": "Tag layer",
           "description": "Add tag to layer name ?",
           "optional": true
         }
@@ -38,16 +37,23 @@
     },
     {
       "name": "Update selected",
-      "command": "update",
+      "command": "src/code.ts--update",
       "parameters": [
         {
-          "name": "Language",
           "key": "lang",
+          "name": "Language",
           "description": "Select a language"
         }
       ]
     },
-    {"name": "Reset history", "command": "clearHistory"}
+    {
+      "name": "Reset history",
+      "command": "src/code.ts--clearHistory"
+    },
+    {
+      "name": "Open UI",
+      "command": "src/ui/main.ts--default"
+    }
   ],
   "networkAccess": {
     "allowedDomains": [

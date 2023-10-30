@@ -1,6 +1,7 @@
 
-const get = async <T extends any[]>(key: string) => {
-  return ((await figma.clientStorage.getAsync(key)) || []) as T
+const get = async <T>(key: string):Promise<T[]> => {
+  const result = await figma.clientStorage.getAsync(key)
+  return (result || []) as T[]
 }
 
 const clear = async (key: string) => {
@@ -8,7 +9,7 @@ const clear = async (key: string) => {
 }
 
 const push = async <T>(key: string, value: any, compare?: (stored: T) => boolean) => {
-  const arr: T[] = await get(key)
+  const arr = await get<T>(key)
   let existingId: number
   if (compare) {
     existingId = arr.findIndex(compare)
