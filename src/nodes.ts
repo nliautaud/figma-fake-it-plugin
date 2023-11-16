@@ -2,7 +2,10 @@
 import { Method, Fake } from './fake'
 
 function getSelected() {
-  return figma.currentPage.selection.flatMap(getChildTextNodes)
+  return textNodes(figma.currentPage.selection)
+}
+function textNodes(nodes:readonly SceneNode[]) {
+  return nodes.flatMap(getChildTextNodes)
 }
 
 function getChildTextNodes(node: SceneNode): TextNode[] {
@@ -170,6 +173,8 @@ function center(node: SceneNode) {
 export const Nodes = {
   create,
   getSelected,
+  textNodes,
+  getChildTextNodes,
   paramsFromName,
   tag,
   edit,

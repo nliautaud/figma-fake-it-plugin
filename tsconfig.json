@@ -1,14 +1,18 @@
 // tsconfig.json
 {
+  "extends": "@create-figma-plugin/tsconfig",
   "compilerOptions": {
     "target": "es6",
-    "lib": ["es6"],
+    "lib": [
+      "es6",
+      "dom"
+    ],
     "strict": true,
     "typeRoots": [
       "./node_modules/@types",
       "./node_modules/@figma"
     ],
-    "outDir": "./dist",
+    "outDir": "./build",
     "jsx": "react",
     "allowJs": true,
     "moduleResolution": "node",

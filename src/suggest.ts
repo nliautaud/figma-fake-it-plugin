@@ -4,6 +4,22 @@ import { FakerLanguage } from './data'
 import { Method, Fake, NamedItem } from './fake'
 import { Storage } from './storage'
 
+// import fuzzysort from 'fuzzysort'
+// const mystuff = [{file:'Monitor.cpp'}, {file:'MeshRenderer.cpp'}]
+// const results = fuzzysort.go('mr', mystuff, {key:'file'})
+// [{score:-18, obj:{file:'MeshRenderer.cpp'}}, {score:-6009, obj:{file:'Monitor.cpp'}}]
+
+
+const searchableLangs = new Fuse(Fake.languages(), {
+  keys: ['name']
+})
+const searchableCategories = new Fuse(Fake.categories(), {
+  keys: ['name']
+})
+const searchableMethods = new Fuse(Fake.allMethods, {
+  keys: ['category', 'label', 'fullLabel']
+})
+
 export interface SuggestionOption {
   name: string
   data?: any
@@ -15,40 +31,66 @@ const format = (input: NamedItem) => ({
 } as SuggestionOption)
 
 const search = (query: string, searchable: Fuse<any>): SuggestionOption[] => {
+  console.log(query)
   return searchable
     .search(query)
     .map(result => format(result.item))
 }
-async function languages(): Promise<SuggestionOption[]> {
+async function languages(query:string): Promise<SuggestionOption[]> {
+  if(query)
+    return search(query, searchableLangs)
   return getSuggestions<FakerLanguage, string>(
-    await Storage.get('history.lang'),
+    await Storage.get<string>('history.lang'),
     Fake.languages,
     (lang) => lang.name,
     (history, lang) => history.indexOf(lang.code),
     Any.languages
   )
 }
-async function categories(): Promise<SuggestionOption[]> {
+async function categories(query:string): Promise<SuggestionOption[]> {
+  if(query)
+    return search(query, searchableCategories)
   return getSuggestions<NamedItem, string>(
-    await Storage.get('history.cat'),
+    await Storage.get<string>('history.cat'),
     Fake.categories,
     (category) => category.name,
     (history, category) => history.indexOf(category.name),
     Any.categories
   )
 }
-async function methods(category: NamedItem): Promise<SuggestionOption[]> {
+async function methods(query:string, category: NamedItem): Promise<SuggestionOption[]> {
+  let suggestions: SuggestionOption[]
+  if (query) {
+    if (!category) {
+      suggestions = searchableMethods.search({ fullLabel: query }).map(result => ({
+        name: result.item.fullLabel,
+        data: result.item
+      }))
+    } else {
+      suggestions = searchableMethods.search({
+        $and: [
+          { category: `!${category.name}` },
+          { label: query }
+        ]
+      }).map(result => ({
+        name: result.item.label,
+        data: result.item
+      }))
+    }
+    return suggestions
+  }
+
   if (!category) {
     return getSuggestions<Method, Method>(
-      await Storage.get('history.method'),
+      await Storage.get<Method>('history.method'),
       () => Fake.allMethods,
       (method) => method.fullLabel,
       (history, method) => history.findIndex(stored => Fake.equals(method, stored)),
       Any.methods
     )
   }
-  return getSuggestions(
-    await Storage.get('history.method'),
+  return getSuggestions<Method, Method>(
+    await Storage.get<Method>('history.method'),
     () => Fake.allMethods.filter(item => item.category == category.name),
     (method) => method.label,
     (history, method) => history.findIndex(stored => Fake.equals(method, stored)),

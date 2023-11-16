@@ -69,14 +69,8 @@ const format = (s: string) => {
   const spaced = s.replace(/([A-Z])/, ' $1')
   return spaced[0].toUpperCase() + spaced.slice(1)
 }
-const searchableLangs = new Fuse(languages(), {
-  keys: ['name']
-})
 const methodsKeys = Object.keys(methods())
 const categories = () => methodsKeys.map(name => ({ name: name }) as NamedItem)
-const searchableCategories = new Fuse(categories(), {
-  keys: ['name']
-})
 const allMethods: Method[] = methodsKeys.map(category =>
   methods()[category].map(name => ({
     id: `${category}.${name}`,
@@ -101,17 +95,11 @@ allMethods
       }))
   }
 })
-const searchableMethods = new Fuse(allMethods, {
-  keys: ['category', 'label', 'fullLabel']
-})
 
 export const Fake = {
   fake,
   languages,
   categories,
-  searchableLangs,
-  searchableCategories,
-  searchableMethods,
   allMethods,
   equals
 }
